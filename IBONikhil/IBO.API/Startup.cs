@@ -31,6 +31,8 @@ namespace IBO.API
             services.AddDbContext<DataContext>(x => x.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
             services.AddScoped<IStudentService, StudentService>();
             services.AddScoped<IStudentRepository, StudentRepository>();
+            services.AddScoped<ILoggerService, LoggerService>();
+            services.AddScoped<ILoggerRepository, LoggerRepository>();
 
             services.AddSwaggerGen(c =>
             {
