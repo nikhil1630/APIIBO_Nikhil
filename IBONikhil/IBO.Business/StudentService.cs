@@ -37,12 +37,12 @@ namespace IBO.Business
 
         }
 
-        public async Task<IEnumerable> GetAllStudentName()
+        public async Task<string> GetAllStudentName()
         {
             try
             {
                 var studentName = await _studentRepository.GetAllStudentName();
-                return studentName;
+                return studentName.ToString();
             }
             catch (Exception ex)
             {

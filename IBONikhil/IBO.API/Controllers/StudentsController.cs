@@ -32,10 +32,10 @@ namespace IBO.API.Controllers
 
         [HttpGet]
         [Route("GetAllStudentName")]
-        public async Task<IEnumerable> GetAllStudentName()
+        public async Task<string> GetAllStudentName()
         {
             var studentsByName = await _studentService.GetAllStudentName();
-            return studentsByName;
+            return studentsByName.ToString();
         }
 
         [HttpGet]

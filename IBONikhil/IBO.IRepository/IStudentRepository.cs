@@ -12,7 +12,7 @@ namespace IBO.IRepository
     public interface IStudentRepository
     {
         Task<List<StudentDTOs>> GetAllStudentDetails();
-        Task<IEnumerable> GetAllStudentName();
+        Task<string> GetAllStudentName();
         Task<StudentDTOs> GetStudentByID(int? id);
         Task<bool> Register(Student student);
         Task<bool> UpdateStudent(int id,Student student);

@@ -46,7 +46,7 @@ namespace IBO.Repository
 
         }
 
-        public async Task<IEnumerable> GetAllStudentName()
+        public async Task<string> GetAllStudentName()
         {
             try
             {
@@ -62,7 +62,7 @@ namespace IBO.Repository
 
                     listOfStudentFullName.Add(student);
                 }
-                return listOfStudentFullName;
+                return listOfStudentFullName.ToString();
             }
 
             catch (Exception ex)

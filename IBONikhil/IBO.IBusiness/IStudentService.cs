@@ -12,7 +12,7 @@ namespace IBO.IBusiness
     public interface IStudentService
     {
         Task<List<StudentDTOs>> GetAllStudentDetails();
-        Task<IEnumerable> GetAllStudentName();
+        Task<string> GetAllStudentName();
         Task<StudentDTOs> GetStudentByID(int? id);
         Task<bool> Register(StudentDTOs studentDTOs);
         Task<bool> Update(int id,StudentDTOs studentDTOs);
