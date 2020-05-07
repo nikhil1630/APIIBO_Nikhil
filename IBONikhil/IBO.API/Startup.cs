@@ -29,6 +29,7 @@ namespace IBO.API
         {
             services.AddControllers();
             services.AddDbContext<DataContext>(x => x.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
+            services.AddStackExchangeRedisCache(x => x.Configuration =Configuration.GetConnectionString("Redis"));
             services.AddScoped<IStudentService, StudentService>();
             services.AddScoped<IStudentRepository, StudentRepository>();
             services.AddScoped<ILoggerService, LoggerService>();
@@ -48,7 +49,7 @@ namespace IBO.API
                     .AllowAnyMethod();
                    
             }));
-
+           
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

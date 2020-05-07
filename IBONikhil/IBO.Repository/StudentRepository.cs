@@ -5,12 +5,16 @@ using IBO.IRepository;
 using IBO.Repository.DBContextUtility;
 using IBO.Repository.Entities;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Distributed;
+using Microsoft.Extensions.Caching.StackExchangeRedis;
+using Newtonsoft.Json;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 using static IBO.Common.Enums;
 
@@ -20,49 +24,72 @@ namespace IBO.Repository
     {
         private readonly DataContext _dataContext;
         private readonly ILoggerRepository _loggerRepository;
+        private IDistributedCache _distributedCache;
 
-        public StudentRepository(DataContext dataContext, ILoggerRepository loggerRepository)
+        public StudentRepository(DataContext dataContext, ILoggerRepository loggerRepository, IDistributedCache distributedCache)
         {
             _dataContext = dataContext;
             _loggerRepository = loggerRepository;
+            _distributedCache = distributedCache;
         }
 
         public async Task<List<StudentDTOs>> GetAllStudentDetails()
         {
             try
             {
-                var studentListFromDB = await _dataContext.Students.ToListAsync();
-                if (studentListFromDB == null)
+                var cacheStudent = _distributedCache.GetString("Students");
+
+                if (cacheStudent == null)
                 {
-                    return null;
+                    var studentListFromDB = await _dataContext.Students.ToListAsync();
+                    if (studentListFromDB == null)
+                    {
+                        return null;
+                    }
+                    cacheStudent = System.Text.Json.JsonSerializer.Serialize(studentListFromDB);
+                    GetDataFromCache(cacheStudent, "Students");
+                    return EntityMapper<Student, StudentDTOs>.MapEntityCollection(studentListFromDB);
                 }
-                return EntityMapper<Student, StudentDTOs>.MapEntityCollection(studentListFromDB);
+                else
+                {
+                    return JsonConvert.DeserializeObject<List<StudentDTOs>>(cacheStudent);
+                }
             }
+
             catch (Exception ex)
             {
                 await _loggerRepository.InsertIntoLog(ExceptionHelper.HandleException(ErrorLevel.Error.ToString(), ex.ToString(), $"Failed to get Student details from db."));
                 return null;
             }
-
         }
 
         public async Task<string> GetAllStudentName()
         {
             try
             {
+                var cacheStudentName = await _distributedCache.GetStringAsync("Students");
                 var listOfStudentFullName = new List<string>();
-
-                var studentsFromDB = await _dataContext.Students.ToListAsync();
-                if (studentsFromDB == null)
-                    return null;
-
-                foreach (var studentFullName in studentsFromDB)
+                if (cacheStudentName == null)
                 {
-                    var student = studentFullName.FirstName + " " + studentFullName.LastName;
+                    var studentsFromDB = await _dataContext.Students.ToListAsync();
+                    if (studentsFromDB == null)
+                        return null;
+                    
 
-                    listOfStudentFullName.Add(student);
+                    foreach (var studentFullName in studentsFromDB)
+                    {
+                        var student = studentFullName.FirstName + " " + studentFullName.LastName;
+
+                        listOfStudentFullName.Add(student);
+                    }
+                    cacheStudentName = System.Text.Json.JsonSerializer.Serialize(listOfStudentFullName);
+                    GetDataFromCache(cacheStudentName, "Students");
+                    return cacheStudentName.ToString();
                 }
-                return listOfStudentFullName.ToString();
+                else
+                {
+                    return cacheStudentName.ToString();
+                }
             }
 
             catch (Exception ex)
@@ -100,7 +127,7 @@ namespace IBO.Repository
             }
             catch (Exception ex)
             {
-                await _loggerRepository.InsertIntoLog(ExceptionHelper.HandleException(ErrorLevel.Error.ToString(), ex.ToString(), $"Failed to register Student with {student.FirstName+" "+student.LastName} in db."));
+                await _loggerRepository.InsertIntoLog(ExceptionHelper.HandleException(ErrorLevel.Error.ToString(), ex.ToString(), $"Failed to register Student with {student.FirstName + " " + student.LastName} in db."));
                 return false;
             }
 
@@ -157,6 +184,12 @@ namespace IBO.Repository
                 return false;
             }
 
+        }
+        private void GetDataFromCache(string cacheStudent, string dataEntity)
+        {
+            var options = new DistributedCacheEntryOptions();
+            options.SetAbsoluteExpiration(DateTimeOffset.Now.AddMinutes(1));
+            _distributedCache.SetString(dataEntity, cacheStudent, options);
         }
     }
 }
