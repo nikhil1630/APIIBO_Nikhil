@@ -104,10 +104,22 @@ namespace IBO.Repository
         {
             try
             {
-                var studentByIdFromDB = await _dataContext.Students.FirstOrDefaultAsync(x => x.Id == id);
-                if (studentByIdFromDB == null)
-                    return null;
-                return EntityMapper<Student, StudentDTOs>.MapEntity(studentByIdFromDB);
+                var cacheStudentName = await _distributedCache.GetStringAsync("Students");
+                if (cacheStudentName == null)
+                {
+                    var studentByIdFromDB = await _dataContext.Students.FirstOrDefaultAsync(x => x.Id == id);
+                    if (studentByIdFromDB == null)
+                        return null;
+                    cacheStudentName = System.Text.Json.JsonSerializer.Serialize(studentByIdFromDB);
+                    GetDataFromCache(cacheStudentName, "Students");
+
+                    return EntityMapper<Student, StudentDTOs>.MapEntity(studentByIdFromDB);
+                }
+                else
+                {
+                    return JsonConvert.DeserializeObject<StudentDTOs>(cacheStudentName);
+                }
+
             }
             catch (Exception ex)
             {
