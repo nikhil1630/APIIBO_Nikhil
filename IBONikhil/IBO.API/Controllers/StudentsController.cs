@@ -9,6 +9,7 @@ using IBO.Business.DTOs;
 using IBO.IBusiness;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 
 namespace IBO.API.Controllers
 {
@@ -17,17 +18,27 @@ namespace IBO.API.Controllers
     public class StudentsController : ControllerBase
     {
         private readonly IStudentService _studentService;
+        private readonly ILogger<StudentsController> _logger;
 
-        public StudentsController(IStudentService studentService)
+        public StudentsController(IStudentService studentService, ILogger<StudentsController> logger)
         {
             _studentService = studentService;
+            _logger = logger;
         }
 
         [HttpGet]
         public async Task<List<StudentDTOs>> GetAllStudent()
         {
-            var getStudentsList = await _studentService.GetAllStudentDetails();
-            return getStudentsList;
+            try
+            {
+                var getStudentsList = await _studentService.GetAllStudentDetails();
+                return getStudentsList;
+            }
+            catch (Exception ex )
+            {
+                _logger.LogError($"Failed to get all student data", ex);
+                return null;
+            }
         }
 
         [HttpGet]
@@ -36,6 +47,7 @@ namespace IBO.API.Controllers
         {
             var studentsByName = await _studentService.GetAllStudentName();
             return studentsByName.ToString();
+
         }
 
         [HttpGet]

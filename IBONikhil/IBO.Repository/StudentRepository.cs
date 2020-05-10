@@ -37,7 +37,7 @@ namespace IBO.Repository
         {
             try
             {
-                var cacheStudent = _distributedCache.GetString("Students");
+                var cacheStudent = _distributedCache.GetString(Constant.StudentEntity);
 
                 if (cacheStudent == null)
                 {
@@ -47,7 +47,7 @@ namespace IBO.Repository
                         return null;
                     }
                     cacheStudent = System.Text.Json.JsonSerializer.Serialize(studentListFromDB);
-                    GetDataFromCache(cacheStudent, "Students");
+                    GetDataFromCache(cacheStudent,Constant.StudentEntity);
                     return EntityMapper<Student, StudentDTOs>.MapEntityCollection(studentListFromDB);
                 }
                 else
@@ -67,7 +67,7 @@ namespace IBO.Repository
         {
             try
             {
-                var cacheStudentName = await _distributedCache.GetStringAsync("Students");
+                var cacheStudentName = await _distributedCache.GetStringAsync(Constant.StudentEntity);
                 var listOfStudentFullName = new List<string>();
                 if (cacheStudentName == null)
                 {
@@ -83,7 +83,7 @@ namespace IBO.Repository
                         listOfStudentFullName.Add(student);
                     }
                     cacheStudentName = System.Text.Json.JsonSerializer.Serialize(listOfStudentFullName);
-                    GetDataFromCache(cacheStudentName, "Students");
+                    GetDataFromCache(cacheStudentName, Constant.StudentEntity);
                     return cacheStudentName.ToString();
                 }
                 else
@@ -104,14 +104,14 @@ namespace IBO.Repository
         {
             try
             {
-                var cacheStudentName = await _distributedCache.GetStringAsync("Students");
+                var cacheStudentName = await _distributedCache.GetStringAsync(Constant.StudentEntity);
                 if (cacheStudentName == null)
                 {
                     var studentByIdFromDB = await _dataContext.Students.FirstOrDefaultAsync(x => x.Id == id);
                     if (studentByIdFromDB == null)
                         return null;
                     cacheStudentName = System.Text.Json.JsonSerializer.Serialize(studentByIdFromDB);
-                    GetDataFromCache(cacheStudentName, "Students");
+                    GetDataFromCache(cacheStudentName, Constant.StudentEntity);
 
                     return EntityMapper<Student, StudentDTOs>.MapEntity(studentByIdFromDB);
                 }
@@ -197,11 +197,19 @@ namespace IBO.Repository
             }
 
         }
-        private void GetDataFromCache(string cacheStudent, string dataEntity)
+        private async void GetDataFromCache(string cacheStudent, string dataEntity)
         {
-            var options = new DistributedCacheEntryOptions();
-            options.SetAbsoluteExpiration(DateTimeOffset.Now.AddMinutes(1));
-            _distributedCache.SetString(dataEntity, cacheStudent, options);
+            try
+            {
+                var options = new DistributedCacheEntryOptions();
+                options.SetAbsoluteExpiration(DateTimeOffset.Now.AddMinutes(1));
+                _distributedCache.SetString(dataEntity, cacheStudent, options);
+            }
+            catch (Exception ex)
+            {
+                await _loggerRepository.InsertIntoLog(ExceptionHelper.HandleException(ErrorLevel.Error.ToString(), ex.ToString(), $"Failed to Get Data from Redis Cache by {cacheStudent} "));
+               
+            }
         }
     }
 }
