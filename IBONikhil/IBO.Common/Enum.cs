@@ -11,5 +11,11 @@ namespace IBO.Common
             Debug,
             Error
         }
+        public enum UserRole
+        {
+            Admin,
+            Cordinator,
+            Student
+        }
     }
 }

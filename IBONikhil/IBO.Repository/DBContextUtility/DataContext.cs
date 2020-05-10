@@ -13,6 +13,7 @@ namespace IBO.Repository.DBContextUtility
         public DbSet<Board> Boards { get; set; }
         public DbSet<School> Schools { get; set; }
         public DbSet<Logger> Loggers { get; set; }
+        public DbSet<User> Users { get; set; }
 
     }
 

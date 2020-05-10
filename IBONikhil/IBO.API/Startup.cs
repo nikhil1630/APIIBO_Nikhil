@@ -12,6 +12,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Swashbuckle.AspNetCore;
 using Microsoft.OpenApi.Models;
+using IBO.API.Validator;
 
 namespace IBO.API
 {
@@ -34,7 +35,9 @@ namespace IBO.API
             services.AddScoped<IStudentRepository, StudentRepository>();
             services.AddScoped<ILoggerService, LoggerService>();
             services.AddScoped<ILoggerRepository, LoggerRepository>();
-
+            services.AddScoped<IUserAccessService, UserAccessService>();
+            services.AddScoped<IUserAccessRepository, UserAccessRepository>();
+            services.AddScoped<IStudentValidator, StudentValidator>();
             services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v2", new OpenApiInfo {
@@ -47,9 +50,9 @@ namespace IBO.API
                 builder.AllowAnyOrigin()
                     .AllowAnyHeader()
                     .AllowAnyMethod();
-                   
+
             }));
-           
+
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

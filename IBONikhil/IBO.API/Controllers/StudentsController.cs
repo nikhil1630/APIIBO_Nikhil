@@ -5,8 +5,10 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
+using IBO.API.Validator;
 using IBO.Business.DTOs;
 using IBO.IBusiness;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
@@ -20,10 +22,14 @@ namespace IBO.API.Controllers
         private readonly IStudentService _studentService;
         private readonly ILogger<StudentsController> _logger;
 
-        public StudentsController(IStudentService studentService, ILogger<StudentsController> logger)
+        private readonly IStudentValidator _studentValidator;
+        public StudentsController(IStudentService studentService, ILogger<StudentsController> logger,IStudentValidator studentValidator)
         {
             _studentService = studentService;
             _logger = logger;
+            _studentValidator = studentValidator;
+
+
         }
 
         [HttpGet]
@@ -63,12 +69,17 @@ namespace IBO.API.Controllers
         }
 
         [HttpPost("register")]
+        //[Authorize(Roles ="Admin")]
         public async Task<IActionResult> Register([FromBody] StudentDTOs studentDTOs)
         {
-            if (!ModelState.IsValid)
-                return BadRequest();
-            await _studentService.Register(studentDTOs);
-            return Ok("Student with name = " + studentDTOs.FirstName + " " + studentDTOs.LastName + " Registered successfully.");
+            if(_studentValidator.CanPostSchool(studentDTOs))
+            {
+                if (!ModelState.IsValid)
+                    return BadRequest();
+                await _studentService.Register(studentDTOs);
+                return Ok("Student with name = " + studentDTOs.FirstName + " " + studentDTOs.LastName + " Registered successfully.");
+            }
+            return BadRequest("User access denied");
         }
 
 
